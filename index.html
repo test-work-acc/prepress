@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверка макетов печати</title>
+    <meta name="description" content="Профессиональная проверка макетов для печати с поддержкой всех стандартных форматов">
+    <meta name="author" content="Print Check">
+
+    <meta property="og:title" content="Проверка макетов печати">
+    <meta property="og:description" content="Профессиональная проверка макетов для печати с поддержкой всех стандартных форматов">
+    <meta property="og:type" content="website">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 4xl;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
+        }
+
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .format-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .format-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+        }
+
+        .format-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .format-btn .name {
+            font-weight: 600;
+            display: block;
+        }
+
+        .format-btn .size {
+            opacity: 0.7;
+            font-size: 0.75rem;
+        }
+
+        .custom-format {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            margin-top: 1rem;
+        }
+
+        .input-group {
+            flex: 1;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+        }
+
+        .btn-outline:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .print-options {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .print-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .print-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+        }
+
+        .print-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(248, 250, 252, 0.8);
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-icon {
+            width: 3rem;
+            height: 3rem;
+            margin: 0 auto 1rem;
+            stroke: #94a3b8;
+        }
+
+        .progress-container {
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: #e2e8f0;
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            transition: width 0.3s ease;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 0.75rem;
+            margin: 1rem 0;
+        }
+
+        .file-icon {
+            width: 2rem;
+            height: 2rem;
+            stroke: #3b82f6;
+        }
+
+        .status-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .status-icon.success {
+            stroke: #10b981;
+        }
+
+        .status-icon.error {
+            stroke: #ef4444;
+        }
+
+        .url-display {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.8);
+            font-size: 0.875rem;
+        }
+
+        .check-btn {
+            display: block;
+            margin: 3rem auto 0;
+            padding: 1rem 3rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .check-btn:hover {
+            background: #047857;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(5, 150, 105, 0.3);
+        }
+
+        .check-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Проверка макетов печати</h1>
+            <p>Загрузите файл и выберите параметры для проверки готовности к печати</p>
+        </div>
+
+        <!-- Format Selector -->
+        <div class="card">
+            <h3 class="card-title">Выберите формат проверяемого макета</h3>
+            
+            <div>
+                <label style="display: block; margin-bottom: 1rem; font-weight: 500;">Стандартный</label>
+                <div class="format-grid" id="formatGrid">
+                    <!-- Formats will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 1rem; font-weight: 500;">Произвольный</label>
+                <div class="custom-format">
+                    <div class="input-group">
+                        <label for="customWidth">Ширина, мм</label>
+                        <input type="number" id="customWidth" placeholder="210" min="1" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="customHeight">Высота, мм</label>
+                        <input type="number" id="customHeight" placeholder="297" min="1" max="1000">
+                    </div>
+                    <button class="btn" onclick="applyCustomFormat()">Применить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print Options -->
+        <div class="card">
+            <h3 class="card-title">Количество сторон</h3>
+            <div class="print-options">
+                <div class="print-btn active" onclick="selectPrintOption('single', this)">
+                    Односторонний
+                </div>
+                <div class="print-btn" onclick="selectPrintOption('double', this)">
+                    Двухсторонний
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload -->
+        <div class="card">
+            <h3 class="card-title">Загрузка макетов</h3>
+            
+            <div id="uploadArea">
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p style="font-weight: 500; margin-bottom: 0.5rem;">
+                        Нажмите для загрузки или перетащите файлы в эту область
+                    </p>
+                    <p style="color: #64748b; font-size: 0.875rem;">
+                        Максимальный размер файла: 200 МБ
+                    </p>
+                </div>
+                <input type="file" id="fileInput" class="hidden" accept=".jpg,.jpeg,.png,.pdf,.tiff,.tif" onchange="handleFileSelect(this.files[0])">
+            </div>
+
+            <div id="uploadProgress" class="hidden">
+                <div class="file-info">
+                    <svg class="file-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <div style="flex: 1;">
+                        <p id="fileName" style="font-weight: 500;"></p>
+                        <p id="uploadStatus" style="color: #64748b; font-size: 0.875rem;">Загрузка файла...</p>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                    </div>
+                    <p id="progressText" style="text-align: center; margin-top: 0.5rem; color: #64748b; font-size: 0.875rem;">0%</p>
+                </div>
+            </div>
+
+            <div id="uploadSuccess" class="hidden">
+                <div class="file-info">
+                    <svg class="status-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div style="flex: 1;">
+                        <p id="successFileName" style="font-weight: 500;"></p>
+                        <p style="color: #10b981; font-size: 0.875rem;">Файл успешно загружен</p>
+                    </div>
+                </div>
+                
+                <div style="padding: 1rem; background: rgba(248, 250, 252, 0.8); border-radius: 0.75rem; margin: 1rem 0;">
+                    <p style="font-weight: 500; margin-bottom: 0.5rem;">Ссылка на файл:</p>
+                    <div class="url-display">
+                        <input type="text" id="fileUrl" class="url-input" readonly>
+                        <button class="btn" onclick="window.open(document.getElementById('fileUrl').value, '_blank')">
+                            <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="btn btn-outline" style="width: 100%;" onclick="resetUpload()">
+                    Загрузить другой файл
+                </button>
+            </div>
+
+            <div id="uploadError" class="hidden">
+                <div class="file-info" style="border: 1px solid #fecaca;">
+                    <svg class="status-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div style="flex: 1;">
+                        <p id="errorFileName" style="font-weight: 500;"></p>
+                        <p id="errorMessage" style="color: #ef4444; font-size: 0.875rem;"></p>
+                    </div>
+                </div>
+                
+                <button class="btn btn-outline" style="width: 100%;" onclick="resetUpload()">
+                    Попробовать еще раз
+                </button>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <button id="checkBtn" class="check-btn" onclick="checkLayout()" disabled>
+            ПРОВЕРИТЬ
+        </button>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Поддерживаемые форматы: JPG, PNG, PDF, TIFF • Максимальный размер: 200 МБ</p>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let selectedFormat = null;
+        let printOptions = { sides: 'single' };
+        let selectedFile = null;
+        let isProcessing = false;
+
+        const standardFormats = [
+            { id: 'a7', name: 'A7', width: 105, height: 148 },
+            { id: 'a6', name: 'A6', width: 148, height: 105 },
+            { id: 'a5', name: 'A5', width: 148, height: 210 },
+            { id: 'a4', name: 'A4', width: 210, height: 297 },
+            { id: 'a3', name: 'A3', width: 297, height: 420 },
+            { id: 'custom1', name: '210x210', width: 210, height: 210 },
+            { id: 'custom2', name: '99x210', width: 99, height: 210 }
+        ];
+
+        // Initialize
+        function init() {
+            renderFormats();
+            setupDragAndDrop();
+            updateCheckButton();
+            
+            // Set default format
+            selectFormat(standardFormats[3]); // A4
+        }
+
+        function renderFormats() {
+            const grid = document.getElementById('formatGrid');
+            grid.innerHTML = '';
+            
+            standardFormats.forEach(format => {
+                const btn = document.createElement('div');
+                btn.className = 'format-btn';
+                btn.onclick = () => selectFormat(format);
+                btn.innerHTML = `
+                    <span class="name">${format.name}</span>
+                    <span class="size">${format.width}×${format.height} мм</span>
+                `;
+                grid.appendChild(btn);
+            });
+        }
+
+        function selectFormat(format) {
+            selectedFormat = format;
+            
+            // Update UI
+            document.querySelectorAll('.format-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const formatBtns = document.querySelectorAll('.format-btn');
+            const index = standardFormats.findIndex(f => f.id === format.id);
+            if (index >= 0 && formatBtns[index]) {
+                formatBtns[index].classList.add('active');
+            }
+            
+            updateCheckButton();
+        }
+
+        function applyCustomFormat() {
+            const width = parseInt(document.getElementById('customWidth').value);
+            const height = parseInt(document.getElementById('customHeight').value);
+            
+            if (width > 0 && height > 0) {
+                const customFormat = {
+                    id: 'custom',
+                    name: `${width}x${height}`,
+                    width,
+                    height
+                };
+                
+                // Clear standard selection
+                document.querySelectorAll('.format-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                selectedFormat = customFormat;
+                updateCheckButton();
+            }
+        }
+
+        function selectPrintOption(option, element) {
+            printOptions.sides = option;
+            
+            document.querySelectorAll('.print-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            element.classList.add('active');
+        }
+
+        function setupDragAndDrop() {
+            const uploadZone = document.getElementById('uploadZone');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, () => {
+                    uploadZone.classList.add('dragover');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, () => {
+                    uploadZone.classList.remove('dragover');
+                }, false);
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
+            }, false);
+        }
+
+        function handleFileSelect(file) {
+            if (!file) return;
+            
+            const maxSize = 200 * 1024 * 1024; // 200MB
+            
+            if (file.size > maxSize) {
+                showError(file.name, 'Файл слишком большой. Максимальный размер: 200 МБ');
+                return;
+            }
+            
+            selectedFile = file;
+            uploadFile(file);
+            updateCheckButton();
+        }
+
+        function uploadFile(file) {
+            // Show upload progress
+            document.getElementById('uploadArea').classList.add('hidden');
+            document.getElementById('uploadSuccess').classList.add('hidden');
+            document.getElementById('uploadError').classList.add('hidden');
+            document.getElementById('uploadProgress').classList.remove('hidden');
+            
+            document.getElementById('fileName').textContent = file.name;
+            
+            // Simulate upload progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 95) progress = 95;
+                
+                updateProgress(progress);
+            }, 200);
+            
+            // Simulate API call
+            setTimeout(async () => {
+                clearInterval(progressInterval);
+                
+                try {
+                    // TODO: Replace with actual webhook URL
+                    const WEBHOOK_URL = 'YOUR_WEBHOOK_URL_HERE';
+                    
+                    // Uncomment for real implementation:
+                    /*
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const response = await fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showSuccess(file.name, result.fileUrl);
+                    } else {
+                        throw new Error(result.message || 'Ошибка сервера');
+                    }
+                    */
+                    
+                    // Mock success response
+                    updateProgress(100);
+                    setTimeout(() => {
+                        showSuccess(file.name, `https://example.com/files/${file.name}`);
+                    }, 500);
+                    
+                } catch (error) {
+                    showError(file.name, 'Произошла ошибка при загрузке файла. Попробуйте еще раз.');
+                }
+            }, 2000);
+        }
+
+        function updateProgress(progress) {
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+        }
+
+        function showSuccess(fileName, fileUrl) {
+            document.getElementById('uploadProgress').classList.add('hidden');
+            document.getElementById('uploadSuccess').classList.remove('hidden');
+            
+            document.getElementById('successFileName').textContent = fileName;
+            document.getElementById('fileUrl').value = fileUrl;
+        }
+
+        function showError(fileName, message) {
+            document.getElementById('uploadProgress').classList.add('hidden');
+            document.getElementById('uploadError').classList.remove('hidden');
+            
+            document.getElementById('errorFileName').textContent = fileName;
+            document.getElementById('errorMessage').textContent = message;
+            
+            selectedFile = null;
+            updateCheckButton();
+        }
+
+        function resetUpload() {
+            document.getElementById('uploadArea').classList.remove('hidden');
+            document.getElementById('uploadProgress').classList.add('hidden');
+            document.getElementById('uploadSuccess').classList.add('hidden');
+            document.getElementById('uploadError').classList.add('hidden');
+            
+            document.getElementById('fileInput').value = '';
+            selectedFile = null;
+            updateCheckButton();
+        }
+
+        function updateCheckButton() {
+            const btn = document.getElementById('checkBtn');
+            const canProcess = selectedFile && selectedFormat && !isProcessing;
+            
+            btn.disabled = !canProcess;
+        }
+
+        async function checkLayout() {
+            if (!selectedFile || !selectedFormat || isProcessing) return;
+            
+            isProcessing = true;
+            const btn = document.getElementById('checkBtn');
+            
+            btn.innerHTML = `
+                <span class="spinner"></span>
+                Проверяем...
+            `;
+            
+            // Simulate processing
+            console.log('Processing file:', {
+                file: selectedFile,
+                format: selectedFormat,
+                options: printOptions
+            });
+            
+            setTimeout(() => {
+                isProcessing = false;
+                btn.innerHTML = 'ПРОВЕРИТЬ';
+                updateCheckButton();
+                
+                alert('Проверка завершена! Результаты отправлены на ваш email.');
+            }, 2000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
