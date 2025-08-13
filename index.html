@@ -156,11 +156,11 @@
             background: transparent;
             border: 1px solid #e2e8f0;
             color: #64748b;
-            padding: 1rem 3rem; /* Единый стиль кнопок */
-            width: 100%; /* Единый стиль кнопок */
-            font-weight: 600; /* Единый стиль кнопок */
-            font-size: 1.125rem; /* Единый стиль кнопок */
-            border-radius: 1rem; /* Единый стиль кнопок */
+            padding: 1rem 3rem;
+            width: 100%;
+            font-weight: 600;
+            font-size: 1.125rem;
+            border-radius: 1rem;
         }
 
         .btn-outline:hover {
@@ -219,7 +219,6 @@
             stroke: #94a3b8;
         }
 
-        /* Styles for Progress Bar & UI states */
         .processing-area {
             text-align: center;
             padding: 2rem;
@@ -413,6 +412,9 @@
             pointer-events: none;
         }
 
+        .delete-btn.disabled:hover {
+            background: transparent;
+        }
 
         .spinner {
             display: inline-block;
@@ -446,7 +448,6 @@
             font-size: 0.875rem;
         }
 
-        /* New report styles */
         .report-summary {
             font-weight: 500;
             font-size: 1.125rem;
@@ -454,7 +455,6 @@
             white-space: pre-wrap;
         }
         
-        /* Error box styles */
         .error-box {
             background-color: #fff5f5;
             border: 1px solid #fecaca;
@@ -476,9 +476,8 @@
             line-height: 1.5;
         }
 
-        /* Result form spacing */
         #reportInfo {
-            margin-bottom: 2rem; /* Увеличенный отступ после отчета */
+            margin-bottom: 2rem;
         }
     </style>
 </head>
@@ -495,7 +494,7 @@
             <div>
                 <label style="display: block; margin-bottom: 1rem; font-weight: 500;">Стандартный</label>
                 <div class="format-grid" id="formatGrid">
-                    </div>
+                </div>
             </div>
 
             <div>
@@ -554,7 +553,7 @@
                         </svg>
                         <p id="selectedFileName" style="font-weight: 500;"></p>
                     </div>
-                    <svg class="delete-btn" id="deleteFileBtn" onclick="resetFile()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="delete-btn" id="deleteFileBtn" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </div>
@@ -567,23 +566,25 @@
             </button>
         </div>
 
-      <div id="resultBlock" class="card hidden">
-    <h3 class="card-title">Результат проверки</h3>
-    <div id="resultForm" class="result-form">
-        <div id="reportInfo">
-            <p class="report-summary" id="reportSummary"></p>
+       <div id="resultBlock" class="card hidden">
+            <h3 class="card-title">Результат проверки</h3>
+            <div id="resultForm" class="result-form">
+                <div id="reportInfo">
+                    <p class="report-summary" id="reportSummary"></p>
+                </div>
+                <a id="reportLink" href="#" target="_blank" class="action-button"><span style="color: white;">Скачать исправленный макет</span></a>
+                <button class="btn-outline" onclick="resetAll()">Проверить другой файл</button>
+            </div>
         </div>
-        <a id="reportLink" href="#" target="_blank" class="action-button">
-            <span style="color: white; font-weight: 600; font-size: 1.125rem;">Скачать исправленный макет</span>
-        </a>
-        <button class="btn-outline" onclick="resetAll()">Проверить другой файл</button>
+
+        <div class="footer hidden">
+            <p>Поддерживаемые форматы: JPG, PNG, PDF, TIFF • Максимальный размер: 200 МБ</p>
+        </div>
     </div>
-</div>
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
     <script>
-        // State
         let selectedFormat = null;
         let printOptions = { sides: 'single' };
         let selectedFile = null;
@@ -599,7 +600,6 @@
             { id: 'custom2', name: '99x210', width: 99, height: 210 }
         ];
 
-        // DOM elements
         const uploadArea = document.getElementById('uploadArea');
         const fileInfoCard = document.getElementById('fileInfoCard');
         const selectedFileName = document.getElementById('selectedFileName');
@@ -610,13 +610,19 @@
         const reportSummary = document.getElementById('reportSummary');
         const reportLink = document.getElementById('reportLink');
 
-        // Инициализация
         function init() {
             renderFormats();
             setupDragAndDrop();
             updateCheckButton();
             requestNotificationPermission();
-            selectFormat(standardFormats[3]); // A4 по умолчанию
+            selectFormat(standardFormats[3]);
+            
+            deleteFileBtn.addEventListener('click', () => {
+                // Если файл уже загружен и результат не виден, можно сбросить
+                if (selectedFile && resultBlock.classList.contains('hidden')) {
+                    resetFile();
+                }
+            });
         }
 
         function renderFormats() {
@@ -717,7 +723,7 @@
         function handleFileSelect(file) {
             if (!file) return;
 
-            const maxSize = 200 * 1024 * 1024; // 200MB
+            const maxSize = 200 * 1024 * 1024;
 
             if (file.size > maxSize) {
                 showErrorNotification('Файл слишком большой. Максимальный размер: 200 МБ');
@@ -732,13 +738,12 @@
             updateCheckButton();
             showSuccessNotification('Файл загружен на сайт!');
         }
-
+        
         function resetFile() {
             selectedFile = null;
             document.getElementById('fileInput').value = '';
             uploadArea.classList.remove('hidden');
             fileInfoCard.classList.add('hidden');
-
             actionBlock.innerHTML = `
                 <button id="checkBtn" class="action-button" onclick="checkLayout()" disabled>
                     ПРОВЕРИТЬ
@@ -750,6 +755,7 @@
         function resetAll() {
             resetFile();
             resultBlock.classList.add('hidden');
+            deleteFileBtn.classList.remove('disabled');
             updateCheckButton();
         }
 
@@ -809,12 +815,10 @@
                 progressText.textContent = 'Получаем результат...';
                 await animateProgress(90, 100, 500);
                 
-                if (result.status === 'success') {
+                if (response.ok && result.status === 'success') {
                     handleWebhookResponse(result);
-                } else if (result.status === 'error') {
-                    handleWebhookError(result);
                 } else {
-                    throw new Error('Неизвестный формат ответа от вебхука');
+                    handleWebhookError(result);
                 }
 
             } catch (error) {
@@ -823,7 +827,7 @@
                 actionBlock.innerHTML = `
                     <div class="error-box">
                         <p class="error-title">Произошла ошибка!</p>
-                        <p class="error-message">Ошибка: NetworkError when attempting to fetch resource.. Не удалось отправить файл на сервер. Пожалуйста, попробуйте еще раз.</p>
+                        <p class="error-message">Не удалось отправить файл на сервер. Пожалуйста, попробуйте еще раз.</p>
                     </div>
                     <div class="check-block">
                         <button class="action-button" onclick="checkLayout()">
@@ -837,7 +841,7 @@
 
             } finally {
                 isProcessing = false;
-                deleteFileBtn.classList.remove('disabled');
+                // deleteFileBtn.classList.remove('disabled'); <-- Эту строку убрали
                 updateCheckButton();
             }
         }
@@ -845,16 +849,19 @@
         function handleWebhookResponse(result) {
             actionBlock.innerHTML = '';
             resultBlock.classList.remove('hidden');
+            deleteFileBtn.classList.add('disabled'); // Делаем крестик неактивным после получения результата
 
             if (result.report) {
                 reportInfo.classList.remove('hidden');
-                // Заменяем \n на <br> для корректных переносов
                 const formattedSummary = result.report.summary.replace(/\n/g, '<br>');
                 reportSummary.innerHTML = formattedSummary || 'Проверка завершена без отчета.';
                 reportLink.href = result.report.url;
             } else {
                 reportInfo.classList.add('hidden');
             }
+            
+            const downloadButton = document.getElementById('reportLink');
+            downloadButton.innerHTML = `<span style="color: white;">Скачать исправленный макет</span>`;
 
             showSuccessNotification('Проверка завершена!');
             sendBrowserNotification('Проверка макета завершена', `Файл "${selectedFile.name}" успешно обработан.`);
@@ -872,11 +879,11 @@
                     </button>
                 </div>
             `;
+            deleteFileBtn.classList.remove('disabled'); // Делаем крестик активным после ошибки
             showErrorNotification(result.error || 'Произошла ошибка во время проверки.');
             sendBrowserNotification('Ошибка проверки макета', `Не удалось обработать файл "${selectedFile.name}". ${result.error || ''}`);
         }
 
-        // Вспомогательная функция для анимации прогресса
         function animateProgress(start, end, duration) {
             const progressBar = document.getElementById('progressBar');
             if (!progressBar) return Promise.resolve();
@@ -930,7 +937,6 @@
             }).showToast();
         }
 
-        // Запрашиваем разрешение на уведомления
         function requestNotificationPermission() {
             if (!("Notification" in window)) {
                 console.warn("Этот браузер не поддерживает уведомления.");
@@ -939,7 +945,6 @@
             }
         }
 
-        // Отправляем уведомление в браузер
         function sendBrowserNotification(title, body) {
             if (Notification.permission === 'granted') {
                 new Notification(title, {
