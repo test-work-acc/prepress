@@ -589,6 +589,7 @@
         let printOptions = { sides: 'single' };
         let selectedFile = null;
         let isProcessing = false;
+        let pollingInterval = null;
 
         const standardFormats = [
             { id: 'a7', name: 'A7', width: 105, height: 148 },
@@ -767,84 +768,64 @@
         }
 
         async function checkLayout() {
-            if (!selectedFile || !selectedFormat || isProcessing) return;
+    if (!selectedFile || !selectedFormat || isProcessing) return;
 
-            isProcessing = true;
-            deleteFileBtn.classList.add('disabled');
+    isProcessing = true;
+    deleteFileBtn.classList.add('disabled');
+    document.getElementById('resultBlock').classList.add('hidden');
 
-            actionBlock.innerHTML = `
-                <div class="processing-area">
-                    <p id="progressText" class="progress-text">Загружаем файл на сервер...</p>
-                    <div class="progress-bar">
-                        <div id="progressBar" class="progress-fill"></div>
-                    </div>
-                </div>
-            `;
+    actionBlock.innerHTML = `
+        <div class="processing-area">
+            <p id="progressText" class="progress-text">Загружаем файл на сервер...</p>
+            <div class="progress-bar">
+                <div id="progressBar" class="progress-fill"></div>
+            </div>
+        </div>
+    `;
 
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
 
-            document.getElementById('resultBlock').classList.add('hidden');
+    await animateProgress(0, 25, 1500);
+    progressText.textContent = 'Отправка файла на сервер...';
 
-            await animateProgress(0, 25, 1500);
+    const UPLOAD_WEBHOOK_URL = 'https://n8n.mdmprint.online/webhook/def1da05-3d90-4f32-ac46-5378953fdd92';
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('format_id', selectedFormat.id);
+    formData.append('format_name', selectedFormat.name);
+    formData.append('format_width', selectedFormat.width);
+    formData.append('format_height', selectedFormat.height);
+    formData.append('print_sides', printOptions.sides);
 
-            const WEBHOOK_URL = 'https://n8n.mdmprint.online/webhook/def1da05-3d90-4f32-ac46-5378953fdd92';
+    try {
+        const uploadResponse = await fetch(UPLOAD_WEBHOOK_URL, {
+            method: 'POST',
+            body: formData
+        });
 
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('format_id', selectedFormat.id);
-            formData.append('format_name', selectedFormat.name);
-            formData.append('format_width', selectedFormat.width);
-            formData.append('format_height', selectedFormat.height);
-            formData.append('print_sides', printOptions.sides);
+        const uploadResult = await uploadResponse.json();
+        console.log('Webhook Response:', uploadResult);
 
-            try {
-                const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                console.log('Webhook Response:', result);
-
-                await animateProgress(25, 30, 200);
-
-                progressText.textContent = 'Файл проверяется...';
-                await animateProgress(30, 90, 3000);
-
-                progressText.textContent = 'Получаем результат...';
-                await animateProgress(90, 100, 500);
-                
-                if (response.ok && result.status === 'success') {
-                    handleWebhookResponse(result);
-                } else {
-                    handleWebhookError(result);
-                }
-
-            } catch (error) {
-                console.error('Ошибка при отправке на вебхук:', error);
-
-                actionBlock.innerHTML = `
-                    <div class="error-box">
-                        <p class="error-title">Произошла ошибка!</p>
-                        <p class="error-message">Не удалось отправить файл на сервер. Пожалуйста, попробуйте еще раз.</p>
-                    </div>
-                    <div class="check-block">
-                        <button class="action-button" onclick="checkLayout()">
-                            Попробовать еще раз
-                        </button>
-                    </div>
-                `;
-
-                showErrorNotification('Произошла ошибка при отправке на проверку.');
-                sendBrowserNotification('Ошибка проверки макета', `Не удалось отправить файл "${selectedFile.name}". Пожалуйста, попробуйте еще раз.`);
-
-            } finally {
-                isProcessing = false;
-                // deleteFileBtn.classList.remove('disabled'); <-- Эту строку убрали
-                updateCheckButton();
-            }
+        if (uploadResponse.ok && uploadResult.status === 'accepted' && uploadResult.job_id) {
+            document.getElementById('progressText').textContent = 'Файл принят. Начинаем проверку...';
+            await animateProgress(25, 30, 500);
+            
+            // Запуск опроса статуса
+            pollStatus(uploadResult.job_id);
+        } else {
+            handleWebhookError({ error: uploadResult.error || 'Не удалось принять файл к обработке.' });
         }
+    } catch (error) {
+        console.error('Ошибка при отправке на вебхук:', error);
+        handleWebhookError({ error: 'Не удалось отправить файл на сервер. Пожалуйста, попробуйте еще раз.' });
+    } finally {
+        // Здесь мы больше не сбрасываем isProcessing и не обновляем кнопку,
+        // это будет сделано в функциях handleWebhookResponse и handleWebhookError
+        // после завершения или ошибки всего процесса.
+    }
+}
         
         function handleWebhookResponse(result) {
             actionBlock.innerHTML = '';
@@ -865,7 +846,54 @@
 
             showSuccessNotification('Проверка завершена!');
             sendBrowserNotification('Проверка макета завершена', `Файл "${selectedFile.name}" успешно обработан.`);
+            isProcessing = false;
+            updateCheckButton();
         }
+        
+        // pollStatus: Функция для циклического опроса статуса выполнения задачи
+function pollStatus(jobId) {
+    const STATUS_WEBHOOK_URL = 'https://n8n.mdmprint.online/webhook/217bbe2a-198b-48a5-a81e-5cb7e81498a4';
+    const progressText = document.getElementById('progressText');
+    const progressBar = document.getElementById('progressBar');
+    
+    let currentProgress = 30; // Прогресс начинается с 30% после успешной отправки
+
+    pollingInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`${STATUS_WEBHOOK_URL}?job_id=${jobId}`);
+            const result = await response.json();
+
+            if (response.ok) {
+                if (result.status === 'completed' || result.status === 'success') {
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                    await animateProgress(currentProgress, 100, 500);
+                    progressText.textContent = 'Обработка завершена!';
+                    handleWebhookResponse(result);
+                } else if (result.status === 'error') {
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                    progressText.textContent = 'Произошла ошибка.';
+                    handleWebhookError({ error: result.error || 'Неизвестная ошибка' });
+                } else if (result.status === 'in_progress') {
+                    const nextProgress = Math.min(currentProgress + 5, 90);
+                    await animateProgress(currentProgress, nextProgress, 500);
+                    currentProgress = nextProgress;
+                    progressText.textContent = 'Файл проверяется...';
+                }
+            } else {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                handleWebhookError({ error: `Ошибка при запросе статуса: ${response.statusText}` });
+            }
+        } catch (error) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+            console.error('Ошибка при опросе статуса:', error);
+            handleWebhookError({ error: 'Не удалось получить статус файла. Пожалуйста, попробуйте позже.' });
+        }
+    }, 3000); // Интервал опроса: 3 секунды
+}
 
         function handleWebhookError(result) {
             actionBlock.innerHTML = `
@@ -882,6 +910,8 @@
             deleteFileBtn.classList.remove('disabled'); // Делаем крестик активным после ошибки
             showErrorNotification(result.error || 'Произошла ошибка во время проверки.');
             sendBrowserNotification('Ошибка проверки макета', `Не удалось обработать файл "${selectedFile.name}". ${result.error || ''}`);
+            isProcessing = false;
+            updateCheckButton();
         }
 
         function animateProgress(start, end, duration) {
@@ -926,16 +956,33 @@
             }).showToast();
         }
 
-        function showErrorNotification(message) {
-            Toastify({
-                text: message,
-                duration: 3000,
-                gravity: "bottom",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #ef4444, #b91c1c)",
-                stopOnFocus: true,
-            }).showToast();
+        // Переменная для хранения экземпляра уведомления
+let currentToast = null;
+
+function showErrorNotification(message) {
+    // Создаем и сохраняем экземпляр Toastify
+    currentToast = Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "bottom",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #ef4444, #b91c1c)",
+        stopOnFocus: true,
+        close: true // Добавим кнопку "x" для удобства
+    });
+    
+    // Показываем уведомление
+    currentToast.showToast();
+
+    // Запускаем таймер, чтобы принудительно закрыть уведомление
+    // через 3 секунды, независимо от stopOnFocus
+    setTimeout(() => {
+        if (currentToast) {
+            currentToast.hideToast();
+            currentToast = null; // Сбрасываем переменную
         }
+    }, 3000); // 3000 мс = 3 секунды
+}
 
         function requestNotificationPermission() {
             if (!("Notification" in window)) {
